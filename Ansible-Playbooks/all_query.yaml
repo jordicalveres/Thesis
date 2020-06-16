@@ -1,0 +1,64 @@
+- name: playbook for making a query
+  hosts: '{{ site }}'
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      host: '{{ ansible_host }}'
+      username: '{{ ansible_user }}'
+      password: '{{ password }}'
+      validate_certs: no
+
+  tasks:
+    - name: Query a VLAN pool for encap blocks 
+      aci_vlan_pool_encap_block:
+        <<: *aci_login
+        pool: '{{ pool }}' 
+        pool_allocation_mode: static   
+        state: query
+      delegate_to: localhost
+
+    - name: Get vlans & L3 out
+      aci_rest:
+        <<: *aci_login
+        method: get
+        path: /api/class/{{ item }}.json
+      loop: "{{ name_class }}"
+      delegate_to: localhost
+
+    - name: Query a Bridge Domain
+      aci_bd:
+        <<: *aci_login
+        tenant: '{{ tenant }}'
+        bd: '{{ bd }}'
+        state: query
+      delegate_to: localhost
+
+    - name: Query a tenant
+      aci_tenant:
+        <<: *aci_login
+        tenant: '{{ tenant }}'
+        state: query
+      delegate_to: localhost
+
+    - name: Query an AP
+      aci_ap:
+        <<: *aci_login
+        tenant: '{{ tenant }}'
+        ap: '{{ ap }}'
+        state: query
+      delegate_to: localhost
+
+    - name: Get all VPC
+      aci_rest:
+        <<: *aci_login
+        method: get
+        path: /api/class/pcAggrIf.json?query-target-filter=and(eq(pcAggrIf.name,"VPC"))   
+        
+    - name: Query an EPG
+      aci_epg:
+        <<: *aci_login
+        tenant: '{{ tenant }}'
+        ap: '{{ ap }}'
+        epg: '{{ epg }}'
+        state: query
+      delegate_to: localhost

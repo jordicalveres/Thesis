@@ -1,0 +1,21 @@
+- name: playbook to remove a BD
+  hosts: '{{ site }}'
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      host: '{{ ansible_host }}'
+      username: '{{ ansible_user }}'
+      password: '{{ password }}'
+      validate_certs: no
+
+    bd_vars: &bd_vars
+      tenant: '{{ tenant }}'
+      bd: '{{ bd }}'
+
+  tasks:
+    - name: Remove a BD 
+      aci_bd:
+        <<: *aci_login
+        <<: *bd_vars       
+        state: absent
+      delegate_to: localhost

@@ -1,0 +1,42 @@
+- name: playbook for creating a bd L3
+  hosts: '{{ site }}'
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      host: '{{ ansible_host }}'
+      username: '{{ ansible_user }}'
+      password: '{{ password }}'
+      validate_certs: no
+
+    bd_vars: &bd_vars
+      tenant: '{{ tenant }}'
+      bd: '{{ bd }}'
+
+  tasks:
+    - name: Create a BD 
+      aci_bd:
+        <<: *aci_login
+        <<: *bd_vars       
+        vrf: '{{ vrf }}'
+        description: '{{ bd }}'
+        state: present
+      delegate_to: localhost
+
+    - name: Create a Subnet 
+      aci_bd_subnet:
+        <<: *aci_login
+        <<: *bd_vars 
+        gateway: '{{ gateway }}'
+        mask: '{{ mask }}'
+        scope: public
+        state: present
+      delegate_to: localhost
+
+    - name: Associate L3_Out to BD
+      aci_bd_to_l3out:
+        <<: *aci_login
+        <<: *bd_vars 
+        l3out: '{{ item }}'
+        state: present
+      loop: '{{ l3_out_list }}'
+      delegate_to: localhost

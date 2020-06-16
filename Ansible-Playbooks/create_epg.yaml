@@ -1,0 +1,72 @@
+- name: playbook for creating an EPG
+  hosts: '{{ site }}'
+  gather_facts: no
+  vars:
+    aci_login: &aci_login
+      host: '{{ ansible_host }}'
+      username: '{{ ansible_user }}'
+      password: '{{ password }}'
+      validate_certs: no
+
+    epg_vars: &epg_vars
+      tenant: '{{ tenant }}'
+      ap: '{{ ap }}'
+      epg: '{{ epg }}'
+
+  tasks:
+    - name: Create an EPG
+      aci_epg:
+        <<: *aci_login
+        <<: *epg_vars
+        bd: '{{ bd }}'
+        state: present
+      delegate_to: localhost
+
+
+    - name: Add an alias to the EPG
+      aci_rest:
+        <<: *aci_login
+        path: /api/mo.json 
+        method: post
+        content:
+          {
+            "fvAEPg": {
+              "attributes": {
+                "nameAlias": '{{ alias }}',
+                "dn": '{{ dn }}'
+              }
+            }
+          }
+      delegate_to: localhost
+
+    - name: Add a new physical domain to EPG binding
+      aci_epg_to_domain:
+        <<: *aci_login
+        <<: *epg_vars
+        domain: '{{ domain }}' 
+        domain_type: phys
+        state: present
+      delegate_to: localhost
+
+    - name: Deploy Static Path binding for given EPG
+      aci_static_binding_to_epg:
+        <<: *aci_login
+        <<: *epg_vars
+        encap_id: '{{ vlan_id }}'                   
+        interface_type: '{{ item.type }}'         # Depending the case it can be vpc or switch_port
+        pod_id: 1                               
+        leafs: '{{ item.leafs }}'                 # If it's vpc then it's two numbers (1101-1102). If not it's only one number   
+        interface: '{{ item.interface }}'         # Is the EndPoint. If it's VPC then it's a noun.
+        state: present
+      loop: "{{ ports }}"
+      delegate_to: localhost
+
+    - name: Bind an EPG to a Contract 
+      aci_epg_to_contract:
+        <<: *aci_login
+        <<: *epg_vars
+        contract: '{{ contract }}'
+        contract_type: provider
+        state: present
+      when: need_contract == "true"
+      delegate_to: localhost
