@@ -2,6 +2,8 @@
 
 ## Thesis - Jordi Calveres
 
+[![DOI](https://zenodo.org/badge/272767402.svg)](https://zenodo.org/badge/latestdoi/272767402)
+
 This project consists in the automation of the deployment of new subnets in a completely 
 unattended way to give connectivity to the network servers connected in the Cisco ACI SDN network. 
 This automation will participate in a supply chain of both physical and virtual servers, and will generate 
